@@ -27,13 +27,18 @@ class ApiController {
                 "<li><a href='/api/book'>Les Livres</a></li>" +
                 "</ol>")
     }
-
+    def books(){
+        book()
+    }
     def book() {
+
         switch (request.getMethod()) {
             case 'GET':
 
                 if (!params.id) {
-
+                    if (Book.findAll().size() == 0){
+                        render(status: 200, text: "Pas de Livres")
+                    }
                     def books = [books: Book.findAll()]
                     render books as JSON
 
@@ -52,7 +57,7 @@ class ApiController {
                 break
             case 'POST':
                 if (!Library.get(params.library.id)) {
-                    render(status: 400, text: "Librairie cible introuvable!")
+                    render(status: 404, text: "Librairie cible introuvable!")
                     return
                 }
                 DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
@@ -78,18 +83,27 @@ class ApiController {
                 }
                 break
             case 'PUT':
-
-                Book bookToUpdate = new Book(params)
-                def putBook = Library.executeUpdate("update Book b set b.name = " + bookToUpdate.name +
-                        " , b.author = " + bookToUpdate.author +
-                        " , b.yearCreated = " + bookToUpdate.yearCreated +
-                        " , b.isbn = " + bookToUpdate.isbn +
-                        " , b.library.id = " + bookToUpdate.library.is +
-                        " where b.id = " + params.id)
-                if (putBook){
-                    render(status: 200, text: "Livre mis à jour avec succès")
-                }else{
-                    render(status: 400, text: "erreur")
+                request.withFormat {
+                    json {
+                        if (!Library.findById(request.JSON.library.id)) {
+                            render(status: 400, text: "La librairie de substitution n'existe pas!")
+                            return
+                        } else {
+                            DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+                            Date date = formatter.parse(request.JSON.releaseDate);
+                            def putBook = Library.executeUpdate("update Book b set b.name = '" + request.JSON.name + "'" +
+                                    " , b.author = '" + request.JSON.author + "'" +
+                                    " , b.releaseDate = '" + date.year + "-" + date.day + "-" + date.month + "'" +
+                                    " , b.isbn = '" + request.JSON.isbn + "'" +
+                                    " , b.library.id = " + request.JSON.library.id +
+                                    " where b.id = " + params.id)
+                            if (putBook) {
+                                render(status: 202, text: "Livre mis à jour avec succès")
+                            } else {
+                                render(status: 400, text: "erreur")
+                            }
+                        }
+                    }
                 }
                 break
             case 'DELETE':
@@ -99,9 +113,9 @@ class ApiController {
                 }
                 def delBook = Book.executeUpdate("delete Book where id = " + params.id)
                 if (delBook) {
-                    render(status: 200, text: "Le livre est supprimée avec succès")
+                    render(status: 202, text: "Le livre est supprimée avec succès")
                 } else {
-                    render(status: 400, text: "erreur")
+                    render(status: 400, text: "la requête est mal formatée")
                 }
                 break
             default:
@@ -109,17 +123,22 @@ class ApiController {
         }
 
     }
-
+    def libraries(){
+        library()
+    }
     def library() {
+
         switch (request.getMethod()) {
             case 'GET':
                 if (!params.id) {
-
+                    if (Library.findAll().size() == 0){
+                        render(status: 200, text: "Pas de librairies")
+                    }
                     def libraries = [libraries: Library.findAll()]
                     render libraries as JSON
 
                 } else {
-
+                    println getActionName()
                     if (!Library.findById(params.id)) {
                         render(status: 404, text: "Librairie " + params.id + " introuvable!")
                         return
@@ -135,35 +154,41 @@ class ApiController {
             case 'POST':
                 def libraryInstance = new Library(params)
                 if (libraryInstance.save(flush: true)) {
-                    response.status = 201
-
+                    render( status: 201, text: "Librairie bien creée")
                 } else {
-                    render(status: 400, text: params)
+                    render(status: 400, text: "Un champ est mal formaté")
                 }
                 break
             case 'PUT':
-
-                Library libraryToUpdate = new Library(params)
-                def putLib = Library.executeUpdate("update Library l set l.name = " + libraryToUpdate.name +
-                        " , l.address = " + libraryToUpdate.address +
-                        " , l.yearCreated = " + libraryToUpdate.yearCreated +
-                        " where l.id = " + params.id)
-                if (putLib){
-                    render(status: 200, text: "Librairie mise à jour avec succès")
-                }else{
-                    render(status: 400, text: "erreur")
+                request.withFormat {
+                    json {
+                        def putLib = Library.executeUpdate("update Library l set l.name = '" + request.JSON.name + "'" +
+                                " , l.address = '" + request.JSON.address + "'" +
+                                " , l.yearCreated = " + request.JSON.yearCreated +
+                                " where l.id = " + params.id)
+                        if (putLib) {
+                            render(status: 202, text: "Librairie mise à jour avec succès")
+                        } else {
+                            render(status: 400, text: "la requête est mal formatée")
+                        }
+                    }
                 }
+
                 break
             case 'DELETE':
+                if (Book.findAllByLibrary(Library.findById(params.id)).size() > 0){
+                    render(status: 405, text: "La librairie contient des livres!")
+                    return
+                }
                 if (!Library.findById(params.id)) {
                     render(status: 404, text: "La librairie est introuvable")
                     return
                 }
                 def delLib = Library.executeUpdate("delete Library where id = " + params.id)
                 if (delLib) {
-                    render(status: 200, text: "La librairie est supprimée avec succès")
+                    render(status: 202, text: "La librairie est supprimée avec succès")
                 } else {
-                    render(status: 400, text: "erreur")
+                    render(status: 400, text: "la requête est mal formatée")
                 }
                 break
 
