@@ -12,13 +12,13 @@ import java.text.SimpleDateFormat
 @Secured("permitAll")
 class ApiController {
     def springSecurityService
-
+    @Secured("ROLE_ADMIN")
     def success() {
         render(status: 200, text: "Connecté! <br>"
                 + "Bienvenue l'utilisateur " + springSecurityService.currentUser.id + " <br>" +
                 "<a href='/api/index'>aller à l'accueil</a>")
     }
-
+    @Secured("ROLE_ADMIN")
     def index() {
         render("Vous etes dans le web service api &#xab librairie de MAROUANE &#xbb <br>" +
                 "Vous pouvez tester les web services: <br>" +
@@ -34,7 +34,7 @@ class ApiController {
 
         switch (request.getMethod()) {
             case 'GET':
-
+                println springSecurityService.getPrincipal().authorities
                 if (!params.id) {
                     if (Book.findAll().size() == 0){
                         render(status: 200, text: "Pas de Livres")
@@ -56,6 +56,10 @@ class ApiController {
                 }
                 break
             case 'POST':
+                if (!springSecurityService.getPrincipal().authorities.any { it.authority == "ROLE_USER" }){
+                    render(status: 405, text: "Vous n'etes pas adhérant, impossible d'jouter un livre")
+                    return
+                }
                 if (!Library.get(params.library.id)) {
                     render(status: 404, text: "Librairie cible introuvable!")
                     return
@@ -83,6 +87,10 @@ class ApiController {
                 }
                 break
             case 'PUT':
+                if (!springSecurityService.getPrincipal().authorities.any { it.authority == "ROLE_USER" }){
+                    render(status: 405, text: "Vous n'etes pas adhérant, impossible de modifer un livre")
+                    return
+                }
                 request.withFormat {
                     json {
                         if (!Library.findById(request.JSON.library.id)) {
@@ -107,6 +115,10 @@ class ApiController {
                 }
                 break
             case 'DELETE':
+                if (!springSecurityService.getPrincipal().authorities.any { it.authority == "ROLE_ADMIN" }){
+                    render(status: 401, text: "Vous n'etes pas admin, impossible de supprimer un livre")
+                    return
+                }
                 if (!Book.findById(params.id)) {
                     render(status: 404, text: "Le livre est introuvable")
                     return
@@ -130,6 +142,7 @@ class ApiController {
 
         switch (request.getMethod()) {
             case 'GET':
+
                 if (!params.id) {
                     if (Library.findAll().size() == 0){
                         render(status: 200, text: "Pas de librairies")
@@ -152,6 +165,12 @@ class ApiController {
                 }
                 break
             case 'POST':
+                println springSecurityService.getPrincipal().getAuthorities()
+
+                if (!springSecurityService.getPrincipal().authorities.any { it.authority == "ROLE_ADMIN" }){
+                    render(status: 401, text: "Vous n'etes pas admin, impossible d'ajouter une librairie")
+                    return
+                }
                 def libraryInstance = new Library(params)
                 if (libraryInstance.save(flush: true)) {
                     render( status: 201, text: "Librairie bien creée")
@@ -160,6 +179,10 @@ class ApiController {
                 }
                 break
             case 'PUT':
+                if (!springSecurityService.getPrincipal().authorities.any { it.authority == "ROLE_ADMIN" }){
+                    render(status: 401, text: "Vous n'etes pas admin, impossible de modifier une librairie")
+                    return
+                }
                 request.withFormat {
                     json {
                         def putLib = Library.executeUpdate("update Library l set l.name = '" + request.JSON.name + "'" +
@@ -176,6 +199,10 @@ class ApiController {
 
                 break
             case 'DELETE':
+                if (!springSecurityService.getPrincipal().authorities.any { it.authority == "ROLE_ADMIN" }){
+                    render(status: 401, text: "Vous n'etes pas admin, impossible de supprimer une librairie")
+                    return
+                }
                 if (Book.findAllByLibrary(Library.findById(params.id)).size() > 0){
                     render(status: 405, text: "La librairie contient des livres!")
                     return
