@@ -20,7 +20,7 @@ implémentation du web service rest sous le framework Grails avec le spring secu
 | PUT | /api/[ book \| books ] | JSON String | 202: Livre mis à jour avec succès | 400: La librairie de substitution n'existe pas! |
 | DELETE | /api/[ book \| books ] | empty | 202: Le livre est supprimé avec succès | 404: Le livre est introuvable <br> 400: la requête est mal formatée |
 
-### Remarque
+### Fonctionnalités prises en charge
   * Dans tous les web services, une reponse 405 est possible si la methode n'est pas autorisée, une reponse 500 en cas d'erreur interne du serveur
   * Les chemins Library et Librairies redirigent vers les même services
   * Les services des livres aussi sont accessibles par /api/book ou bien /api/books
