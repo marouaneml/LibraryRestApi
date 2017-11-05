@@ -2,23 +2,24 @@
 implémentation du web service rest sous le framework Grails avec le spring security dans le cadre du TP web service encadré par Mr.Galli
 
 ## La documentation de l'API
+/!\ Toute la partie metier est dans le controleur ApiController
 ### Les librairies
 | Le verbe HTTP | Le path du web service | Données en entrée | La réponse | Erreurs possibles |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
 | GET | /api/[ library \| libraries ] | empty | la liste de toutes les librairies | 200: Pas de librairies |
 | GET | /api/[ library \| libraries ]/{number} | empty | la libraire qui a l'id en question |  404: Librairie introuvable |
-| POST | /api/[ library \| libraries ] | JSON String | 201: Librairie bien creée | 400: un champ ne correspond pas ou mal formaté |
-| PUT | /api/[ library \| libraries ] | JSON String | 202: Librairie mise à jour avec succès | 400: la requête est mal formatée |
-| DELETE | /api/[ Library \| libraries ] | empty | 202: La librairie est supprimée avec succès | 405: La librairie contient des livres! <br> 404: La librairie est introuvable |
+| POST | /api/[ library \| libraries ] | JSON String | 201: Librairie bien creée | 400: un champ ne correspond pas ou mal formaté <br> 401: Vous n'etes pas admin, impossible d'ajouter une librairie |
+| PUT | /api/[ library \| libraries ] | JSON String | 202: Librairie mise à jour avec succès | 400: la requête est mal formatée <br> 401: Vous n'etes pas admin, impossible de modifier une librairie |
+| DELETE | /api/[ Library \| libraries ] | empty | 202: La librairie est supprimée avec succès | 405: La librairie contient des livres! <br> 404: La librairie est introuvable <br> 401: Vous n'etes pas admin, impossible de supprimer une librairie |
 
 ### Les livres
 | Le verbe HTTP | Le path du web service | Données en entrée | La réponse | Erreurs possibles |
 | ------------- | ------------- | ------------- | ------------- | ------------- | 
 | GET | /api/[ book \| books ] | empty | la liste de tous les livres | 200: Pas de livres |
 | GET | /api/[ book \| books ]/{number} | empty | le livre qui correspond à cet id |  404: Livre introuvable |
-| POST | /api/[ book \| books ] | JSON String | 201: Livre inseré avec succès | 404: Librairie cible introuvable! <br> 400: la date est mal formatée ou des parametres ne sont pas au bon format |
-| PUT | /api/[ book \| books ] | JSON String | 202: Livre mis à jour avec succès | 400: La librairie de substitution n'existe pas! |
-| DELETE | /api/[ book \| books ] | empty | 202: Le livre est supprimé avec succès | 404: Le livre est introuvable <br> 400: la requête est mal formatée |
+| POST | /api/[ book \| books ] | JSON String | 201: Livre inseré avec succès | 404: Librairie cible introuvable! <br> 400: la date est mal formatée ou des parametres ne sont pas au bon format <br> 405: Vous n'etes pas adhérant, impossible d'jouter un livre |
+| PUT | /api/[ book \| books ] | JSON String | 202: Livre mis à jour avec succès | 400: La librairie de substitution n'existe pas! <br> 405: Vous n'etes pas adhérant, impossible de modifer un livre |
+| DELETE | /api/[ book \| books ] | empty | 202: Le livre est supprimé avec succès | 404: Le livre est introuvable <br> 400: la requête est mal formatée <br> 401: Vous n'etes pas admin, impossible de supprimer un livre |
 
 ### Fonctionnalités prises en charge
   * Dans tous les web services, une reponse 405 est possible si la methode n'est pas autorisée, une reponse 500 en cas d'erreur interne du serveur
